@@ -1,0 +1,19 @@
+services:
+  # 1. Frontend Web Application (React PWA)
+  - type: web
+    name: gramvikas-client
+    env: static
+    buildCommand: cd client && npm install && npm run build
+    staticPublishPath: ./client/dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+
+  # 2. Python Agro-BI & SMS Microservice
+  - type: web
+    name: gramvikas-python-service
+    env: python
+    buildCommand: pip install -r server-python/requirements.txt
+    startCommand: python server-python/gramvikas_service.py
+    autoDeploy: true

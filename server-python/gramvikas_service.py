@@ -27,7 +27,7 @@ if sys.platform == "win32":
     except Exception:
         pass
 
-PORT = 5001
+PORT = int(os.environ.get("PORT", 5001))
 
 # --- 1. MAHARASHTRA AGRO-SEASONAL DEMAND FORECASTING ENGINE ---
 

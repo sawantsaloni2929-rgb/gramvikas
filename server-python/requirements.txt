@@ -1,0 +1,3 @@
+# GramVikas Python Microservice
+# Uses Python standard library (http.server, json, urllib, datetime)
+# No external pip dependencies required.
