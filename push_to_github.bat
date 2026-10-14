@@ -3,7 +3,7 @@ echo ========================================================
 echo   GramVikas - Push to GitHub (sawantsaloni2929-rgb)
 echo ========================================================
 
-set PATH=%USERPROFILE%\mingit\cmd;%PATH%
+set PATH=%USERPROFILE%\mingit\cmd;%USERPROFILE%\mingit\mingw64\bin;%PATH%
 
 echo Checking remote configuration...
 git remote -v
