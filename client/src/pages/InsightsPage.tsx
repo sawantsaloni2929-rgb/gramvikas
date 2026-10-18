@@ -5,13 +5,11 @@ import {
   TrendingUp,
   Package,
   AlertTriangle,
-  Lightbulb,
   ArrowUpRight,
   ArrowDownRight,
   CheckCircle2,
   PieChart as PieIcon,
   BarChart3,
-  Cpu,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -47,11 +45,6 @@ export const InsightsPage: React.FC = () => {
             <span>{t.biTitle}</span>
           </h2>
           <p className="text-xs text-slate-500 mt-0.5">{t.biSubtitle}</p>
-        </div>
-
-        <div className="flex items-center gap-1.5 px-3 py-1 bg-forest-100 text-forest-800 rounded-full text-xs font-bold self-start sm:self-auto border border-forest-300">
-          <Cpu className="w-3.5 h-3.5 text-forest-700" />
-          <span>Local Engine (C++ / JS Rules)</span>
         </div>
       </div>
 
@@ -95,21 +88,7 @@ export const InsightsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Actionable Practical Suggestions */}
-      <div className="bg-forest-900 text-white rounded-3xl p-5 shadow-sm border border-forest-800 space-y-3">
-        <h3 className="text-sm font-extrabold text-emerald-300 uppercase tracking-wider flex items-center gap-2">
-          <Lightbulb className="w-4 h-4 text-yellow-400" />
-          <span>{t.actionableSuggestions}</span>
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          {report.actionableInsights.map((ins, idx) => (
-            <div key={idx} className="bg-forest-800/80 p-3.5 rounded-2xl border border-forest-700 text-xs leading-relaxed">
-              <span className="font-bold text-emerald-300">#0{idx + 1}: </span>
-              {language === 'mr' ? ins.mr : ins.en}
-            </div>
-          ))}
-        </div>
-      </div>
+
 
       {/* 7-Day Sales vs Expenses Chart */}
       <div className="bg-white rounded-3xl p-5 border border-cream-200 shadow-sm">

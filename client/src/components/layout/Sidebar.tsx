@@ -9,12 +9,6 @@ import {
   Receipt,
   CreditCard,
   TrendingUp,
-  MessageSquare,
-  RefreshCw,
-  Landmark,
-  FileSpreadsheet,
-  Settings,
-  ShieldCheck,
   Truck,
 } from 'lucide-react';
 import { getStoredUser } from '../../services/authService';
@@ -33,16 +27,7 @@ export const Sidebar: React.FC = () => {
     { to: '/expenses', label: t.expenses, icon: Receipt },
     { to: '/payments', label: t.payments, icon: CreditCard },
     { to: '/insights', label: t.insights, icon: TrendingUp },
-    { to: '/sms', label: t.smsHub, icon: MessageSquare },
-    { to: '/sync', label: t.syncCentre, icon: RefreshCw },
-    { to: '/schemes', label: t.schemes, icon: Landmark },
-    { to: '/reports', label: t.reports, icon: FileSpreadsheet },
-    { to: '/settings', label: t.settings, icon: Settings },
   ];
-
-  if (user.role === 'admin') {
-    navItems.push({ to: '/admin', label: t.admin, icon: ShieldCheck });
-  }
 
   return (
     <aside className="w-64 bg-white border-r border-cream-200 hidden md:flex flex-col flex-shrink-0 min-h-[calc(100vh-57px)]">

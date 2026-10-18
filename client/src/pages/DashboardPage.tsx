@@ -202,14 +202,6 @@ export const DashboardPage: React.FC = () => {
               <CreditCard className="w-4 h-4 text-slate-700 flex-shrink-0" />
               <span>{t.recordPayment}</span>
             </Link>
-
-            <Link
-              to="/sync"
-              className="flex items-center gap-2.5 p-3 rounded-xl bg-cream-100 hover:bg-cream-200 border border-cream-300 text-slate-800 transition-all font-bold text-xs shadow-sm"
-            >
-              <RefreshCw className="w-4 h-4 text-slate-700 flex-shrink-0" />
-              <span>{t.syncCentre}</span>
-            </Link>
           </div>
         </div>
 

@@ -1,62 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useLanguage } from '../../i18n/LanguageContext';
 import { useConnectivity } from '../../services/connectivity';
-import { syncWithServer } from '../../services/syncService';
-import { getPendingSyncCount } from '../../db/dbOperations';
-import { getStoredUser, logoutUser } from '../../services/authService';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Wifi, WifiOff, RefreshCw, Globe, Zap, LogOut, ShieldCheck, User, Users, Store } from 'lucide-react';
+import { getStoredUser } from '../../services/authService';
+import { Link, useLocation } from 'react-router-dom';
+import { Wifi, WifiOff, Globe, Users, Store } from 'lucide-react';
 
-interface HeaderProps {
-  lowResourceMode: boolean;
-  setLowResourceMode: (val: boolean) => void;
-}
-
-export const Header: React.FC<HeaderProps> = ({ lowResourceMode, setLowResourceMode }) => {
+export const Header: React.FC = () => {
   const { language, setLanguage, t } = useLanguage();
   const { isOnline } = useConnectivity();
-  const [pendingSync, setPendingSync] = useState<number>(0);
-  const [isSyncing, setIsSyncing] = useState<boolean>(false);
-  const [syncToast, setSyncToast] = useState<string | null>(null);
-  const navigate = useNavigate();
   const location = useLocation();
   const user = getStoredUser();
-
-  const loadPendingCount = async () => {
-    try {
-      const count = await getPendingSyncCount();
-      setPendingSync(count);
-    } catch {
-      // ignore
-    }
-  };
-
-  useEffect(() => {
-    loadPendingCount();
-    const handler = () => loadPendingCount();
-    window.addEventListener('gramvikas:data_changed', handler);
-    const interval = setInterval(loadPendingCount, 5000);
-    return () => {
-      window.removeEventListener('gramvikas:data_changed', handler);
-      clearInterval(interval);
-    };
-  }, []);
-
-  const handleQuickSync = async () => {
-    if (isSyncing) return;
-    setIsSyncing(true);
-    setSyncToast(language === 'mr' ? 'डेटा सिंक होत आहे...' : 'Syncing data with server...');
-    const res = await syncWithServer();
-    setIsSyncing(false);
-    setSyncToast(res.message);
-    loadPendingCount();
-    setTimeout(() => setSyncToast(null), 4000);
-  };
-
-  const handleLogout = () => {
-    logoutUser();
-    navigate('/login');
-  };
 
   return (
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-cream-200 px-3 sm:px-6 py-2.5 shadow-sm">
@@ -90,7 +43,6 @@ export const Header: React.FC<HeaderProps> = ({ lowResourceMode, setLowResourceM
                 ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
                 : 'bg-amber-50 text-amber-900 border-amber-300 animate-pulse'
             }`}
-            title={isOnline ? 'Online - Live server connected' : 'Offline Mode - Storing 100% locally in IndexedDB'}
           >
             {isOnline ? (
               <>
@@ -104,41 +56,6 @@ export const Header: React.FC<HeaderProps> = ({ lowResourceMode, setLowResourceM
               </>
             )}
           </div>
-
-          {/* Sync Button & Pending Badge */}
-          <button
-            onClick={handleQuickSync}
-            disabled={isSyncing}
-            className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold transition-all border ${
-              pendingSync > 0
-                ? 'bg-amber-100 text-amber-900 border-amber-400 hover:bg-amber-200'
-                : 'bg-cream-100 text-slate-700 border-cream-300 hover:bg-cream-200'
-            }`}
-            title="Click to sync changes with Java Backend"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin text-forest-700' : 'text-slate-600'}`} />
-            {pendingSync > 0 ? (
-              <span className="font-bold text-amber-800">
-                {pendingSync} <span className="hidden sm:inline">{t.syncPending}</span>
-              </span>
-            ) : (
-              <span className="hidden sm:inline">{t.syncCompleted}</span>
-            )}
-          </button>
-
-          {/* Low Resource Mode Toggle */}
-          <button
-            onClick={() => setLowResourceMode(!lowResourceMode)}
-            className={`p-1.5 rounded-lg border text-xs font-medium flex items-center gap-1 transition-colors ${
-              lowResourceMode
-                ? 'bg-emerald-700 text-white border-emerald-800'
-                : 'bg-cream-100 text-slate-700 border-cream-300 hover:bg-cream-200'
-            }`}
-            title="Low Resource Mode: Saves Battery & Data on Budget Phones"
-          >
-            <Zap className="w-4 h-4 text-amber-400" />
-            <span className="hidden lg:inline text-[11px]">{t.lowResource}</span>
-          </button>
 
           {/* Language Switcher */}
           <button
@@ -170,35 +87,8 @@ export const Header: React.FC<HeaderProps> = ({ lowResourceMode, setLowResourceM
               <span className="hidden sm:inline">{t.customerPortal}</span>
             </Link>
           )}
-
-          {/* Admin link if role is admin */}
-          {user.role === 'admin' && (
-            <Link
-              to="/admin"
-              className="p-1.5 bg-purple-50 text-purple-700 border border-purple-200 rounded-lg hover:bg-purple-100"
-              title="Admin Portal"
-            >
-              <ShieldCheck className="w-4 h-4" />
-            </Link>
-          )}
-
-          {/* Profile / Logout */}
-          <Link
-            to="/settings"
-            className="p-1.5 bg-cream-100 text-slate-700 border border-cream-300 rounded-lg hover:bg-cream-200 hidden sm:block"
-            title="Profile & Settings"
-          >
-            <User className="w-4 h-4" />
-          </Link>
         </div>
       </div>
-
-      {/* Sync Toast Feedback */}
-      {syncToast && (
-        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 bg-forest-900 text-white text-xs px-4 py-2 rounded-xl shadow-lg border border-forest-700 animate-fade-in">
-          {syncToast}
-        </div>
-      )}
     </header>
   );
 };

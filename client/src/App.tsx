@@ -18,20 +18,11 @@ import { ExpensesPage } from './pages/ExpensesPage';
 import { CustomersPage } from './pages/CustomersPage';
 import { PaymentsPage } from './pages/PaymentsPage';
 import { InsightsPage } from './pages/InsightsPage';
-import { SmsNotificationsPage } from './pages/SmsNotificationsPage';
-import { SyncCentrePage } from './pages/SyncCentrePage';
-import { SchemesPage } from './pages/SchemesPage';
-import { ReportsBackupPage } from './pages/ReportsBackupPage';
-import { ProfileSettingsPage } from './pages/ProfileSettingsPage';
-import { AdminDashboardPage } from './pages/AdminDashboardPage';
 import { CustomerDashboardPage } from './pages/CustomerDashboardPage';
 import { OrdersPage } from './pages/OrdersPage';
 
 export const App: React.FC = () => {
   const [dbReady, setDbReady] = useState(false);
-  const [lowResourceMode, setLowResourceMode] = useState<boolean>(() => {
-    return localStorage.getItem('gv_low_resource') === 'true';
-  });
 
   useEffect(() => {
     // Initialize offline IndexedDB on application boot
@@ -39,24 +30,6 @@ export const App: React.FC = () => {
       setDbReady(true);
     });
   }, []);
-
-  const handleSetLowResource = (val: boolean) => {
-    setLowResourceMode(val);
-    localStorage.setItem('gv_low_resource', String(val));
-    if (val) {
-      document.body.classList.add('low-resource-mode');
-    } else {
-      document.body.classList.remove('low-resource-mode');
-    }
-  };
-
-  useEffect(() => {
-    if (lowResourceMode) {
-      document.body.classList.add('low-resource-mode');
-    } else {
-      document.body.classList.remove('low-resource-mode');
-    }
-  }, [lowResourceMode]);
 
   if (!dbReady) {
     return (
@@ -79,11 +52,11 @@ export const App: React.FC = () => {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
 
-          {/* Protected Business Management Routes wrapped in Layout */}
+          {/* Core Business Management Routes */}
           <Route
             path="/dashboard"
             element={
-              <Layout lowResourceMode={lowResourceMode} setLowResourceMode={handleSetLowResource}>
+              <Layout>
                 <DashboardPage />
               </Layout>
             }
@@ -91,7 +64,7 @@ export const App: React.FC = () => {
           <Route
             path="/customer-dashboard"
             element={
-              <Layout lowResourceMode={lowResourceMode} setLowResourceMode={handleSetLowResource}>
+              <Layout>
                 <CustomerDashboardPage />
               </Layout>
             }
@@ -99,7 +72,7 @@ export const App: React.FC = () => {
           <Route
             path="/customer-portal"
             element={
-              <Layout lowResourceMode={lowResourceMode} setLowResourceMode={handleSetLowResource}>
+              <Layout>
                 <CustomerDashboardPage />
               </Layout>
             }
@@ -107,7 +80,7 @@ export const App: React.FC = () => {
           <Route
             path="/products"
             element={
-              <Layout lowResourceMode={lowResourceMode} setLowResourceMode={handleSetLowResource}>
+              <Layout>
                 <ProductsPage />
               </Layout>
             }
@@ -115,7 +88,7 @@ export const App: React.FC = () => {
           <Route
             path="/products/new"
             element={
-              <Layout lowResourceMode={lowResourceMode} setLowResourceMode={handleSetLowResource}>
+              <Layout>
                 <ProductFormPage />
               </Layout>
             }
@@ -123,7 +96,7 @@ export const App: React.FC = () => {
           <Route
             path="/products/edit/:id"
             element={
-              <Layout lowResourceMode={lowResourceMode} setLowResourceMode={handleSetLowResource}>
+              <Layout>
                 <ProductFormPage />
               </Layout>
             }
@@ -131,7 +104,7 @@ export const App: React.FC = () => {
           <Route
             path="/sales"
             element={
-              <Layout lowResourceMode={lowResourceMode} setLowResourceMode={handleSetLowResource}>
+              <Layout>
                 <SalesPage />
               </Layout>
             }
@@ -139,7 +112,7 @@ export const App: React.FC = () => {
           <Route
             path="/orders"
             element={
-              <Layout lowResourceMode={lowResourceMode} setLowResourceMode={handleSetLowResource}>
+              <Layout>
                 <OrdersPage />
               </Layout>
             }
@@ -147,7 +120,7 @@ export const App: React.FC = () => {
           <Route
             path="/expenses"
             element={
-              <Layout lowResourceMode={lowResourceMode} setLowResourceMode={handleSetLowResource}>
+              <Layout>
                 <ExpensesPage />
               </Layout>
             }
@@ -155,7 +128,7 @@ export const App: React.FC = () => {
           <Route
             path="/customers"
             element={
-              <Layout lowResourceMode={lowResourceMode} setLowResourceMode={handleSetLowResource}>
+              <Layout>
                 <CustomersPage />
               </Layout>
             }
@@ -163,7 +136,7 @@ export const App: React.FC = () => {
           <Route
             path="/payments"
             element={
-              <Layout lowResourceMode={lowResourceMode} setLowResourceMode={handleSetLowResource}>
+              <Layout>
                 <PaymentsPage />
               </Layout>
             }
@@ -171,59 +144,8 @@ export const App: React.FC = () => {
           <Route
             path="/insights"
             element={
-              <Layout lowResourceMode={lowResourceMode} setLowResourceMode={handleSetLowResource}>
+              <Layout>
                 <InsightsPage />
-              </Layout>
-            }
-          />
-          <Route
-            path="/sms"
-            element={
-              <Layout lowResourceMode={lowResourceMode} setLowResourceMode={handleSetLowResource}>
-                <SmsNotificationsPage />
-              </Layout>
-            }
-          />
-          <Route
-            path="/sync"
-            element={
-              <Layout lowResourceMode={lowResourceMode} setLowResourceMode={handleSetLowResource}>
-                <SyncCentrePage />
-              </Layout>
-            }
-          />
-          <Route
-            path="/schemes"
-            element={
-              <Layout lowResourceMode={lowResourceMode} setLowResourceMode={handleSetLowResource}>
-                <SchemesPage />
-              </Layout>
-            }
-          />
-          <Route
-            path="/reports"
-            element={
-              <Layout lowResourceMode={lowResourceMode} setLowResourceMode={handleSetLowResource}>
-                <ReportsBackupPage />
-              </Layout>
-            }
-          />
-          <Route
-            path="/settings"
-            element={
-              <Layout lowResourceMode={lowResourceMode} setLowResourceMode={handleSetLowResource}>
-                <ProfileSettingsPage
-                  lowResourceMode={lowResourceMode}
-                  setLowResourceMode={handleSetLowResource}
-                />
-              </Layout>
-            }
-          />
-          <Route
-            path="/admin"
-            element={
-              <Layout lowResourceMode={lowResourceMode} setLowResourceMode={handleSetLowResource}>
-                <AdminDashboardPage />
               </Layout>
             }
           />
