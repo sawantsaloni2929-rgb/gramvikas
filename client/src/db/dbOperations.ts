@@ -1,5 +1,5 @@
-import { db, Product, Sale, Expense, Customer, Payment, InventoryLog, SmsRecord, SchemeInfo, CustomerOrder } from './dexieDb';
-import { initialProducts, initialCustomers, initialSales, initialExpenses, initialSmsRecords, verifiedSchemes, initialOrders } from './initialData';
+import { db, Product, Sale, Expense, Customer, Payment, InventoryLog, SmsRecord, SchemeInfo, CustomerOrder, StoredAccount } from './dexieDb';
+import { initialProducts, initialCustomers, initialSales, initialExpenses, initialSmsRecords, verifiedSchemes, initialOrders, initialUsers } from './initialData';
 
 // Generates unique client-side ID
 export const generateId = (prefix: string = 'gv'): string => {
@@ -23,6 +23,24 @@ export const initDatabase = async (): Promise<void> => {
       // ignore
     }
   }
+
+  // Ensure users table is populated with initial accounts
+  try {
+    const userCount = await db.users.count();
+    if (userCount === 0) {
+      await db.users.bulkAdd(initialUsers);
+      localStorage.setItem('gv_accounts_db', JSON.stringify(initialUsers));
+    } else {
+      for (const u of initialUsers) {
+        const exists = await db.users.get(u.id);
+        if (!exists) {
+          await db.users.put(u);
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('[GramVikas DB] User table init:', err);
+  }
 };
 
 // Reset database to rich demo state
@@ -37,6 +55,7 @@ export const resetToDemoData = async (): Promise<void> => {
     db.inventoryLogs,
     db.payments,
     db.orders,
+    db.users,
   ], async () => {
     await db.products.clear();
     await db.customers.clear();
@@ -47,6 +66,7 @@ export const resetToDemoData = async (): Promise<void> => {
     await db.inventoryLogs.clear();
     await db.payments.clear();
     await db.orders.clear();
+    await db.users.clear();
 
     await db.products.bulkAdd(initialProducts);
     await db.customers.bulkAdd(initialCustomers);
@@ -55,7 +75,9 @@ export const resetToDemoData = async (): Promise<void> => {
     await db.smsQueue.bulkAdd(initialSmsRecords);
     await db.schemes.bulkAdd(verifiedSchemes);
     await db.orders.bulkAdd(initialOrders);
+    await db.users.bulkAdd(initialUsers);
   });
+  localStorage.setItem('gv_accounts_db', JSON.stringify(initialUsers));
   console.log('[GramVikas DB] Reset to demo data complete.');
 };
 
@@ -411,5 +433,43 @@ export const updateOrderStatus = async (
   order.syncStatus = 'pending';
   await db.orders.put(order);
   return order;
+};
+
+// User Account Operations (Persistent Auth Store)
+export const getUsers = async (): Promise<StoredAccount[]> => {
+  try {
+    const list = await db.users.toArray();
+    if (list.length > 0) return list;
+  } catch (e) {
+    console.warn('Dexie users read error:', e);
+  }
+  const fallback = localStorage.getItem('gv_accounts_db');
+  return fallback ? JSON.parse(fallback) : initialUsers;
+};
+
+export const getUserById = async (id: string): Promise<StoredAccount | undefined> => {
+  try {
+    const u = await db.users.get(id);
+    if (u) return u;
+  } catch {}
+  const all = await getUsers();
+  return all.find((x) => x.id === id);
+};
+
+export const saveUser = async (user: StoredAccount): Promise<StoredAccount> => {
+  try {
+    await db.users.put(user);
+  } catch (err) {
+    console.warn('Failed saving user to Dexie:', err);
+  }
+  const all = await getUsers();
+  const idx = all.findIndex((x) => x.id === user.id);
+  if (idx >= 0) {
+    all[idx] = user;
+  } else {
+    all.push(user);
+  }
+  localStorage.setItem('gv_accounts_db', JSON.stringify(all));
+  return user;
 };
 

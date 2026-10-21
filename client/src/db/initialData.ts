@@ -1,6 +1,51 @@
-import { Product, Customer, Sale, Expense, SchemeInfo, SmsRecord, CustomerOrder } from './dexieDb';
+import { Product, Customer, Sale, Expense, SchemeInfo, SmsRecord, CustomerOrder, StoredAccount } from './dexieDb';
 
 const USER_ID = 'demo_user_suresh_patil';
+
+export const initialUsers: StoredAccount[] = [
+  {
+    id: 'user_suresh_patil',
+    email: 'suresh@gramvikas.in',
+    phone: '9822998877',
+    password: 'admin123',
+    name: 'Suresh Tukaram Patil',
+    businessName: 'Shree Ganesh Krishi & Kirana Stores',
+    role: 'shopkeeper',
+    village: 'Baramati Rural',
+    district: 'Pune',
+    taluka: 'Baramati',
+    preferredLanguage: 'mr',
+    createdAt: '2026-10-01T09:00:00.000Z',
+  },
+  {
+    id: 'user_ramesh_pawar',
+    email: 'ramesh@gramvikas.in',
+    phone: '9822112233',
+    password: 'customer123',
+    name: 'Ramesh Pawar (शेतकरी)',
+    businessName: 'Pawar Agro Farm',
+    role: 'customer',
+    village: 'Baramati Rural',
+    district: 'Pune',
+    taluka: 'Baramati',
+    preferredLanguage: 'mr',
+    createdAt: '2026-10-01T09:00:00.000Z',
+  },
+  {
+    id: 'user_saloni_sawant',
+    email: 'saloni.s.sawant25@slrtce.in',
+    phone: '9876543210',
+    password: 'saloni123',
+    name: 'Saloni Sawant',
+    businessName: 'Sawant General & Kirana Stores',
+    role: 'shopkeeper',
+    village: 'Thane Rural',
+    district: 'Thane',
+    taluka: 'Bhiwandi',
+    preferredLanguage: 'mr',
+    createdAt: '2026-10-01T09:00:00.000Z',
+  },
+];
 
 export const initialProducts: Product[] = [
   {

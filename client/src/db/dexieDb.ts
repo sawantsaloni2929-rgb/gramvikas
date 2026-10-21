@@ -192,6 +192,21 @@ export interface CustomerOrder {
   userId: string;
 }
 
+export interface StoredAccount {
+  id: string;
+  email: string;
+  phone: string;
+  password: string;
+  name: string;
+  businessName?: string;
+  role: 'shopkeeper' | 'customer' | 'admin';
+  village: string;
+  district: string;
+  taluka?: string;
+  preferredLanguage: 'mr' | 'en';
+  createdAt: string;
+}
+
 export class GramVikasDatabase extends Dexie {
   products!: Table<Product, string>;
   sales!: Table<Sale, string>;
@@ -204,6 +219,7 @@ export class GramVikasDatabase extends Dexie {
   schemes!: Table<SchemeInfo, string>;
   settings!: Table<AppSetting, string>;
   orders!: Table<CustomerOrder, string>;
+  users!: Table<StoredAccount, string>;
 
   constructor() {
     super('GramVikasLocalDB');
@@ -222,6 +238,10 @@ export class GramVikasDatabase extends Dexie {
 
     this.version(2).stores({
       orders: 'id, customerId, customerName, status, orderedAt, syncStatus, userId',
+    });
+
+    this.version(3).stores({
+      users: 'id, email, phone, role, createdAt',
     });
   }
 }

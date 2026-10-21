@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gramvikas-v1';
+const CACHE_NAME = 'gramvikas-v3';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -34,19 +34,18 @@ self.addEventListener('activate', (event) => {
 
 // Fetch: Network first for APIs; Cache-first / Stale-while-revalidate for UI assets
 self.addEventListener('fetch', (event) => {
-  const url = new URL(event.request.url);
-
-  // Ignore non-GET requests (e.g. POST to backend)
   if (event.request.method !== 'GET') {
     return;
   }
 
-  // API calls: Network first, fail gracefully if offline
+  const url = new URL(event.request.url);
+
+  // API calls: Return graceful offline fallback
   if (url.pathname.startsWith('/api/')) {
     event.respondWith(
       fetch(event.request).catch(() => {
-        return new Response(JSON.stringify({ error: 'Network unavailable (Offline mode active)' }), {
-          status: 503,
+        return new Response(JSON.stringify({ status: 'offline', message: 'Local IndexedDB offline mode active' }), {
+          status: 200,
           headers: { 'Content-Type': 'application/json' },
         });
       })
@@ -64,22 +63,34 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Static assets: Stale-while-revalidate strategy
+  // Static assets: Cache-first with stale-while-revalidate
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
-      const fetchPromise = fetch(event.request)
+      if (cachedResponse) {
+        // Refresh in background
+        fetch(event.request)
+          .then((networkResponse) => {
+            if (networkResponse && networkResponse.status === 200) {
+              caches.open(CACHE_NAME).then((cache) => cache.put(event.request, networkResponse));
+            }
+          })
+          .catch(() => {});
+        return cachedResponse;
+      }
+
+      return fetch(event.request)
         .then((networkResponse) => {
           if (networkResponse && networkResponse.status === 200) {
-            const responseToCache = networkResponse.clone();
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(event.request, responseToCache);
-            });
+            const clone = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
           }
           return networkResponse;
         })
-        .catch(() => cachedResponse);
-
-      return cachedResponse || fetchPromise;
+        .catch(() => {
+          if (event.request.headers.get('accept')?.includes('text/html')) {
+            return caches.match('/index.html') || caches.match('/');
+          }
+        });
     })
   );
 });

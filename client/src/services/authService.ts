@@ -1,3 +1,7 @@
+import { StoredAccount } from '../db/dexieDb';
+import { getUsers, saveUser, generateId, saveCustomer } from '../db/dbOperations';
+import { initialUsers } from '../db/initialData';
+
 export interface UserProfile {
   id: string;
   email: string;
@@ -8,20 +12,20 @@ export interface UserProfile {
   taluka?: string;
   phone: string;
   preferredLanguage: 'mr' | 'en';
-  role: 'entrepreneur' | 'admin';
+  role: 'shopkeeper' | 'customer' | 'admin';
 }
 
 const DEFAULT_USER: UserProfile = {
-  id: 'demo_user_suresh_patil',
+  id: 'user_suresh_patil',
   email: 'suresh@gramvikas.in',
   businessName: 'Shree Ganesh Krishi & Kirana Stores',
   ownerName: 'Suresh Tukaram Patil',
   village: 'Baramati Rural',
   taluka: 'Baramati',
   district: 'Pune',
-  phone: '+919822998877',
+  phone: '9822998877',
   preferredLanguage: 'mr',
-  role: 'entrepreneur',
+  role: 'shopkeeper',
 };
 
 export const getStoredUser = (): UserProfile => {
@@ -43,90 +47,126 @@ export const setStoredUser = (user: UserProfile): void => {
   localStorage.setItem('gv_owner_name', user.ownerName);
   localStorage.setItem('gv_owner_phone', user.phone);
   localStorage.setItem('gv_language', user.preferredLanguage);
+  localStorage.setItem('gv_role', user.role);
 };
 
-export const loginUser = async (email: string, password: string): Promise<UserProfile> => {
-  try {
-    const res = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
-    });
+export const loginUser = async (identifier: string, password: string): Promise<UserProfile> => {
+  const cleanId = identifier.trim().toLowerCase();
+  const cleanPhone = identifier.replace(/[^0-9]/g, '');
 
-    if (res.ok) {
-      const data = await res.json();
-      if (data.user) {
-        setStoredUser(data.user);
-        return data.user;
-      }
-    }
-  } catch {
-    console.log('[Auth] Server offline, checking local cached credentials');
+  // 1. First, query all accounts from the local IndexedDB database
+  const allAccounts = await getUsers();
+
+  // 2. Find matching account by email OR phone
+  const matched = allAccounts.find((acc) => {
+    const accEmail = (acc.email || '').trim().toLowerCase();
+    const accPhone = (acc.phone || '').replace(/[^0-9]/g, '');
+    return accEmail === cleanId || (cleanPhone.length >= 7 && accPhone.endsWith(cleanPhone.slice(-10)));
+  });
+
+  if (!matched) {
+    throw new Error(
+      'वापरकर्ता सापडला नाही! कृपया आधी नवीन नोंदणी करा किंवा डेमो माहिती वापरा. / User not found! Please register first or use a demo account.'
+    );
   }
 
-  // Offline fallback authentication
-  if (email.toLowerCase() === 'admin@gramvikas.gov.in') {
-    const adminUser: UserProfile = {
-      id: 'admin_gramvikas_gov',
-      email: 'admin@gramvikas.gov.in',
-      businessName: 'Maharashtra Gramin Vikas Kendra',
-      ownerName: 'District Administration Pune',
-      village: 'Pune HQ',
-      district: 'Pune',
-      phone: '+912026123456',
-      preferredLanguage: 'mr',
-      role: 'admin',
-    };
-    setStoredUser(adminUser);
-    return adminUser;
+  // 3. Verify password
+  if (matched.password !== password) {
+    throw new Error('चुकीचा पासवर्ड! कृपया पुन्हा तपासा. / Incorrect password! Please try again.');
   }
 
-  // Default rural entrepreneur fallback
-  const fallbackUser: UserProfile = {
-    ...DEFAULT_USER,
-    email,
+  // 4. Construct user profile & store active session
+  const userProfile: UserProfile = {
+    id: matched.id,
+    email: matched.email,
+    businessName: matched.businessName || `${matched.name}'s Business`,
+    ownerName: matched.name,
+    village: matched.village || 'Baramati Rural',
+    district: matched.district || 'Pune',
+    taluka: matched.taluka || '',
+    phone: matched.phone,
+    preferredLanguage: matched.preferredLanguage || 'mr',
+    role: matched.role || 'shopkeeper',
   };
-  setStoredUser(fallbackUser);
-  return fallbackUser;
+
+  setStoredUser(userProfile);
+  return userProfile;
 };
 
 export const registerUser = async (formData: {
   email: string;
-  password?: string;
-  businessName: string;
+  phone: string;
+  password: string;
   ownerName: string;
+  businessName?: string;
   village: string;
   district: string;
-  phone: string;
-  preferredLanguage: 'mr' | 'en';
+  taluka?: string;
+  role: 'shopkeeper' | 'customer' | 'admin';
+  preferredLanguage?: 'mr' | 'en';
 }): Promise<UserProfile> => {
-  const newUser: UserProfile = {
-    id: `user_${Date.now()}`,
-    email: formData.email,
-    businessName: formData.businessName,
-    ownerName: formData.ownerName || formData.businessName,
-    village: formData.village,
+  const cleanEmail = formData.email.trim();
+  const cleanPhone = formData.phone.trim();
+  const role = formData.role || 'shopkeeper';
+
+  const newAccount: StoredAccount = {
+    id: `user_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+    email: cleanEmail,
+    phone: cleanPhone,
+    password: formData.password || '123456',
+    name: formData.ownerName || formData.businessName || 'User',
+    businessName: role === 'shopkeeper' ? (formData.businessName || `${formData.ownerName}'s Store`) : 'Customer Account',
+    role,
+    village: formData.village || 'Maharashtra Rural',
     district: formData.district || 'Pune',
-    phone: formData.phone,
+    taluka: formData.taluka || '',
     preferredLanguage: formData.preferredLanguage || 'mr',
-    role: 'entrepreneur',
+    createdAt: new Date().toISOString(),
   };
 
-  try {
-    await fetch('/api/auth/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...formData, ...newUser }),
-    });
-  } catch {
-    console.log('[Auth] Registered locally in offline mode');
+  // 1. Permanently persist in IndexedDB and localStorage
+  await saveUser(newAccount);
+
+  // 2. If it is a customer account, also register in the Customers Table so they appear in Khata!
+  if (role === 'customer') {
+    try {
+      await saveCustomer({
+        name: newAccount.name,
+        phone: newAccount.phone,
+        village: newAccount.village,
+        district: newAccount.district,
+        taluka: newAccount.taluka,
+        totalPurchases: 0,
+        outstandingBalance: 0,
+      });
+    } catch (e) {
+      console.warn('Customer khata link note:', e);
+    }
   }
 
-  setStoredUser(newUser);
-  return newUser;
+  // 3. Set current active session
+  const userProfile: UserProfile = {
+    id: newAccount.id,
+    email: newAccount.email,
+    businessName: newAccount.businessName || newAccount.name,
+    ownerName: newAccount.name,
+    village: newAccount.village,
+    district: newAccount.district,
+    taluka: newAccount.taluka || '',
+    phone: newAccount.phone,
+    preferredLanguage: newAccount.preferredLanguage,
+    role: newAccount.role,
+  };
+
+  setStoredUser(userProfile);
+  return userProfile;
 };
 
 export const logoutUser = (): void => {
   localStorage.removeItem('gv_current_user');
+  localStorage.removeItem('gv_user_id');
   localStorage.removeItem('gv_token');
+  localStorage.removeItem('gv_business_name');
+  localStorage.removeItem('gv_owner_name');
+  localStorage.removeItem('gv_role');
 };
